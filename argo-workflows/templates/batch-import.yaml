@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: batch-import
+  namespace: argo
+  labels:
+    app: knowledge-base
+spec:
+  entrypoint: batch-process
+  arguments:
+    parameters:
+      - name: document-ids
+        description: "JSON array of document IDs to process"
+
+  templates:
+    - name: batch-process
+      steps:
+        - - name: parse-ids
+            template: parse
+            arguments:
+              parameters:
+                - name: document-ids
+                  value: "{{workflow.parameters.document-ids}}"
+
+        - - name: process-each
+            template: trigger-single
+            arguments:
+              parameters:
+                - name: document-id
+                  value: "{{item.id}}"
+                - name: storage-path
+                  value: "{{item.storage_path}}"
+            withParam: "{{steps.parse-ids.outputs.result}}"
+
+    - name: parse
+      inputs:
+        parameters:
+          - name: document-ids
+      script:
+        image: python:3.11-alpine
+        command: [python]
+        source: |
+          import json
+          import sys
+          data = json.loads('{{inputs.parameters.document-ids}}')
+          print(json.dumps(data))
+
+    - name: trigger-single
+      inputs:
+        parameters:
+          - name: document-id
+          - name: storage-path
+      resource:
+        action: create
+        manifest: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: Workflow
+          metadata:
+            generateName: doc-processing-
+          spec:
+            arguments:
+              parameters:
+                - name: document-id
+                  value: "{{inputs.parameters.document-id}}"
+                - name: storage-path
+                  value: "{{inputs.parameters.storage-path}}"
+            workflowTemplateRef:
+              name: doc-processing-dag

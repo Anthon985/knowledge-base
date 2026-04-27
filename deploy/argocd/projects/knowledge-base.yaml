@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: knowledge-base
+  namespace: argocd
+spec:
+  description: "Knowledge Base Document Digitization System"
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: knowledge-base
+      server: https://kubernetes.default.svc
+    - namespace: argo
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: "*"
+    - group: apps
+      kind: "*"
+    - group: argoproj.io
+      kind: "*"

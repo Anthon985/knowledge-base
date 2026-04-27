@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: reindex
+  namespace: argo
+  labels:
+    app: knowledge-base
+spec:
+  entrypoint: reindex-all
+  templates:
+    - name: reindex-all
+      script:
+        image: kb-doc-processor:latest
+        command: [python]
+        source: |
+          import json
+          from sqlalchemy import create_engine, text
+          from utils.common import DB_URL
+
+          engine = create_engine(DB_URL)
+          with engine.connect() as conn:
+              result = conn.execute(text(
+                  "SELECT id, storage_path FROM documents WHERE status = 'completed'"
+              ))
+              docs = [{"id": str(row[0]), "storage_path": row[1]} for row in result]
+
+          print(f"Found {len(docs)} documents to reindex")
+
+          # Submit individual workflows for each document
+          for doc in docs:
+              print(f"Reindexing document: {doc['id']}")
+        envFrom:
+          - configMapRef:
+              name: doc-processor-config

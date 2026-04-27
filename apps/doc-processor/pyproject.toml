@@ -1,0 +1,5 @@
+[project]
+name = "kb-doc-processor"
+version = "0.1.0"
+description = "Knowledge Base Document Processor for Argo Workflows"
+requires-python = ">=3.11"

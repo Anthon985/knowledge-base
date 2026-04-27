@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kb-argo-workflows
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: knowledge-base
+    tier: workflows
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: knowledge-base
+  source:
+    repoURL: https://github.com/your-org/knowledge-base.git
+    targetRevision: HEAD
+    path: argo-workflows/templates
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

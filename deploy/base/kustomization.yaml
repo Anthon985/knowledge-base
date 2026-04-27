@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: knowledge-base
+resources:
+  - namespace.yaml
+  - frontend/
+  - api-server/
+  - postgresql/
+  - qdrant/
+  - elasticsearch/
+  - minio/
+  - redis/
+  - ollama/
+commonLabels:
+  app.kubernetes.io/part-of: knowledge-base

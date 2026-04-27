@@ -1,0 +1,9 @@
+[project]
+name = "kb-api-server"
+version = "0.1.0"
+description = "Knowledge Base API Server"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

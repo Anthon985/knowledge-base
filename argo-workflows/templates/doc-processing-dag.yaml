@@ -1,0 +1,195 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: doc-processing-dag
+  namespace: argo
+  labels:
+    app: knowledge-base
+spec:
+  entrypoint: process-document
+  arguments:
+    parameters:
+      - name: document-id
+        description: "UUID of the document in PostgreSQL"
+      - name: storage-path
+        description: "MinIO object path of the uploaded file"
+  
+  volumes:
+    - name: workdir
+      emptyDir: {}
+
+  templates:
+    # --- DAG Entrypoint ---
+    - name: process-document
+      dag:
+        tasks:
+          - name: detect-type
+            template: detect
+            arguments:
+              parameters:
+                - name: storage-path
+                  value: "{{workflow.parameters.storage-path}}"
+          
+          - name: extract-text
+            template: extract
+            dependencies: [detect-type]
+            arguments:
+              parameters:
+                - name: storage-path
+                  value: "{{workflow.parameters.storage-path}}"
+
+          - name: chunk-text
+            template: chunk
+            dependencies: [extract-text]
+            arguments:
+              parameters:
+                - name: document-id
+                  value: "{{workflow.parameters.document-id}}"
+
+          - name: embed-vectors
+            template: embed
+            dependencies: [chunk-text]
+            arguments:
+              parameters:
+                - name: document-id
+                  value: "{{workflow.parameters.document-id}}"
+
+          - name: index-search
+            template: index
+            dependencies: [chunk-text]
+            arguments:
+              parameters:
+                - name: document-id
+                  value: "{{workflow.parameters.document-id}}"
+                - name: storage-path
+                  value: "{{workflow.parameters.storage-path}}"
+
+          - name: update-metadata
+            template: update-meta
+            dependencies: [embed-vectors, index-search]
+            arguments:
+              parameters:
+                - name: document-id
+                  value: "{{workflow.parameters.document-id}}"
+
+    # --- Step Templates ---
+    - name: detect
+      inputs:
+        parameters:
+          - name: storage-path
+      container:
+        image: kb-doc-processor:latest
+        command: [python, steps/detect.py]
+        args:
+          - "--storage-path={{inputs.parameters.storage-path}}"
+          - "--output=/work/detect-result.json"
+        volumeMounts:
+          - name: workdir
+            mountPath: /work
+        envFrom:
+          - configMapRef:
+              name: doc-processor-config
+
+    - name: extract
+      inputs:
+        parameters:
+          - name: storage-path
+      container:
+        image: kb-doc-processor:latest
+        command: [python, steps/extract.py]
+        args:
+          - "--storage-path={{inputs.parameters.storage-path}}"
+          - "--detect-result=/work/detect-result.json"
+          - "--output=/work/extracted-text.txt"
+        volumeMounts:
+          - name: workdir
+            mountPath: /work
+        envFrom:
+          - configMapRef:
+              name: doc-processor-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+
+    - name: chunk
+      inputs:
+        parameters:
+          - name: document-id
+      container:
+        image: kb-doc-processor:latest
+        command: [python, steps/chunk.py]
+        args:
+          - "--input=/work/extracted-text.txt"
+          - "--document-id={{inputs.parameters.document-id}}"
+          - "--output=/work/chunks.json"
+        volumeMounts:
+          - name: workdir
+            mountPath: /work
+        envFrom:
+          - configMapRef:
+              name: doc-processor-config
+
+    - name: embed
+      inputs:
+        parameters:
+          - name: document-id
+      container:
+        image: kb-doc-processor:latest
+        command: [python, steps/embed.py]
+        args:
+          - "--chunks-file=/work/chunks.json"
+          - "--document-id={{inputs.parameters.document-id}}"
+        volumeMounts:
+          - name: workdir
+            mountPath: /work
+        envFrom:
+          - configMapRef:
+              name: doc-processor-config
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "4000m"
+
+    - name: index
+      inputs:
+        parameters:
+          - name: document-id
+          - name: storage-path
+      container:
+        image: kb-doc-processor:latest
+        command: [python, steps/index.py]
+        args:
+          - "--chunks-file=/work/chunks.json"
+          - "--document-id={{inputs.parameters.document-id}}"
+          - "--filename={{inputs.parameters.storage-path}}"
+        volumeMounts:
+          - name: workdir
+            mountPath: /work
+        envFrom:
+          - configMapRef:
+              name: doc-processor-config
+
+    - name: update-meta
+      inputs:
+        parameters:
+          - name: document-id
+      container:
+        image: kb-doc-processor:latest
+        command: [python, steps/metadata.py]
+        args:
+          - "--document-id={{inputs.parameters.document-id}}"
+          - "--chunks-file=/work/chunks.json"
+          - "--status=completed"
+        volumeMounts:
+          - name: workdir
+            mountPath: /work
+        envFrom:
+          - configMapRef:
+              name: doc-processor-config
