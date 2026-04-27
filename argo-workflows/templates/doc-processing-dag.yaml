@@ -78,7 +78,8 @@ spec:
         parameters:
           - name: storage-path
       container:
-        image: kb-doc-processor:latest
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python, steps/detect.py]
         args:
           - "--storage-path={{inputs.parameters.storage-path}}"
@@ -95,7 +96,8 @@ spec:
         parameters:
           - name: storage-path
       container:
-        image: kb-doc-processor:latest
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python, steps/extract.py]
         args:
           - "--storage-path={{inputs.parameters.storage-path}}"
@@ -120,7 +122,8 @@ spec:
         parameters:
           - name: document-id
       container:
-        image: kb-doc-processor:latest
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python, steps/chunk.py]
         args:
           - "--input=/work/extracted-text.txt"
@@ -138,7 +141,8 @@ spec:
         parameters:
           - name: document-id
       container:
-        image: kb-doc-processor:latest
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python, steps/embed.py]
         args:
           - "--chunks-file=/work/chunks.json"
@@ -163,7 +167,8 @@ spec:
           - name: document-id
           - name: storage-path
       container:
-        image: kb-doc-processor:latest
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python, steps/index.py]
         args:
           - "--chunks-file=/work/chunks.json"
@@ -181,7 +186,8 @@ spec:
         parameters:
           - name: document-id
       container:
-        image: kb-doc-processor:latest
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python, steps/metadata.py]
         args:
           - "--document-id={{inputs.parameters.document-id}}"

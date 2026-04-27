@@ -12,9 +12,15 @@ from app.services.search import search_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import logging
+
+    logger = logging.getLogger(__name__)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    await search_service.ensure_index()
+    try:
+        await search_service.ensure_index()
+    except Exception as e:
+        logger.warning(f"Elasticsearch not available at startup, will retry later: {e}")
     yield
     await search_service.close()
     await engine.dispose()

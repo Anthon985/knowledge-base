@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-server
+  namespace: knowledge-base
 spec:
   replicas: 1
   template:
@@ -21,8 +22,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ollama
+  namespace: knowledge-base
 spec:
-  replicas: 1
+  replicas: 0
   template:
     spec:
       containers:
@@ -39,6 +41,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
+  namespace: knowledge-base
 spec:
   replicas: 1
   template:

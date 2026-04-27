@@ -4,13 +4,15 @@ resources:
   - ../../base
 patches:
   - path: patches/reduce-resources.yaml
+  - path: patches/image-pull-policy.yaml
+  - path: patches/frontend-nodeport.yaml
 images:
   - name: kb-frontend
-    newName: kb-frontend
+    newName: knowledge-base/frontend
     newTag: dev
   - name: kb-api-server
-    newName: kb-api-server
+    newName: knowledge-base/api-server
     newTag: dev
   - name: kb-doc-processor
-    newName: kb-doc-processor
+    newName: knowledge-base/doc-processor
     newTag: dev

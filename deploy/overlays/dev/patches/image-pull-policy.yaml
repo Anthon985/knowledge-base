@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: frontend
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-server
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: api-server
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: redis
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: ollama
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: postgresql
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qdrant
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: qdrant
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: elasticsearch
+          imagePullPolicy: IfNotPresent
+      initContainers:
+        - name: sysctl
+          imagePullPolicy: IfNotPresent
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: knowledge-base
+spec:
+  template:
+    spec:
+      containers:
+        - name: minio
+          imagePullPolicy: IfNotPresent

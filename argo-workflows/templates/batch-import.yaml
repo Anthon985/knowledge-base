@@ -37,7 +37,8 @@ spec:
         parameters:
           - name: document-ids
       script:
-        image: python:3.11-alpine
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python]
         source: |
           import json

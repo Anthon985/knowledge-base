@@ -10,7 +10,8 @@ spec:
   templates:
     - name: reindex-all
       script:
-        image: kb-doc-processor:latest
+        image: knowledge-base/doc-processor:dev
+        imagePullPolicy: IfNotPresent
         command: [python]
         source: |
           import json
